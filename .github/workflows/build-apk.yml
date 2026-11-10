@@ -23,18 +23,17 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Configurer Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Assurer l'exécutabilité de Gradle
+      - name: Accepter les licences Android
         run: |
-          if [ ! -f "gradlew" ]; then
-            gradle wrapper
-          fi
-          chmod +x gradlew
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
-      - name: Compiler APK (Debug & Release)
-        run: ./gradlew assembleDebug --stacktrace
+      - name: Configurer Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Compiler APK (Debug)
+        run: gradle assembleDebug --stacktrace
 
       - name: Téléverser l'APK en artifact
         uses: actions/upload-artifact@v4
