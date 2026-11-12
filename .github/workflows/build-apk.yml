@@ -1,0 +1,108 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # Préparation du SDK Android et NDK
+      - name: Préparer le SDK et le NDK
+        run: |
+          SDKM="$(command -v sdkmanager || echo "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager")"
+          yes | "$SDKM" --licenses > /dev/null || true
+          "$SDKM" "platforms;android-34" "build-tools;34.0.0" "ndk;26.3.11579264"
+
+      # Compilation native de tun2socks (hev-socks5-tunnel)
+      - name: Compiler tun2socks (hev-socks5-tunnel)
+        run: |
+          mkdir -p tun/jni
+          cd tun/jni
+          git clone --depth 1 --recursive https://github.com/heiher/hev-socks5-tunnel.git
+          echo 'include $(call all-subdir-makefiles)' > Android.mk
+          printf 'APP_CFLAGS := -DPKGNAME=hev/htproxy -DCLSNAME=TProxyService\n' > Application.mk
+          cd ..
+          "$ANDROID_HOME/ndk/26.3.11579264/ndk-build" \
+            NDK_LIBS_OUT="$GITHUB_WORKSPACE/app/src/main/jniLibs" \
+            APP_ABI="arm64-v8a armeabi-v7a" \
+            APP_PLATFORM=android-24
+          ls -R "$GITHUB_WORKSPACE/app/src/main/jniLibs"
+
+      # Noyau Xray natif (VLESS, VMess, Trojan)
+      - name: Télécharger le noyau Xray
+        run: |
+          set -e
+          mkdir -p xray && cd xray
+          curl -fsSL -o a64.zip https://github.com/XTLS/Xray-core/releases/latest/download/Xray-android-arm64-v8a.zip
+          curl -fsSL -o a32.zip https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-arm32-v7a.zip
+          unzip -o a64.zip xray -d a64
+          unzip -o a32.zip xray -d a32
+          J="$GITHUB_WORKSPACE/app/src/main/jniLibs"
+          mkdir -p "$J/arm64-v8a" "$J/armeabi-v7a"
+          cp a64/xray "$J/arm64-v8a/libxray.so"
+          cp a32/xray "$J/armeabi-v7a/libxray.so"
+          ls -la "$J"/*
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+
+      - name: Préparer la clé de signature
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+            echo "KEYSTORE_PATH=$RUNNER_TEMP/release.keystore" >> "$GITHUB_ENV"
+            echo "A_SIGN=true" >> "$GITHUB_ENV"
+          else
+            echo "KEYSTORE_B64 non configuré : compilation debug avec clé standard"
+            echo "A_SIGN=false" >> "$GITHUB_ENV"
+          fi
+
+      - name: Compiler l'APK
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ "$A_SIGN" = "true" ]; then
+            gradle assembleRelease --no-daemon --stacktrace
+          else
+            gradle assembleDebug --no-daemon --stacktrace
+          fi
+
+      - name: Vérifier la signature
+        run: |
+          for f in app/build/outputs/apk/*/*.apk; do
+            "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --print-certs "$f" || true
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NexaVpnPro-apk
+          path: app/build/outputs/apk/*/*.apk
+
+      - name: Publier l'APK dans les Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          APK="$(ls app/build/outputs/apk/*/*.apk | head -n 1)"
+          NAME="NexaVpnPro-v1.0.0-build${{ github.run_number }}.apk"
+          cp "$APK" "$NAME"
+          gh release create "v1.0.0-${{ github.run_number }}" "$NAME" \
+            --title "NEXA VPN PRO v1.0.0 (Build ${{ github.run_number }})" \
+            --notes "🛡️ **NEXA VPN PRO** — Version Android complète avec protocoles natifs (SSH, Xray/V2Ray, UDP Custom, SlowDNS) et tun2socks natif compilé. Télécharge l'APK ci-dessous pour l'installer sur ton téléphone." \
+            --latest
