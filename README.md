@@ -1,24 +1,38 @@
-# NEXA VPN PRO — Android
+# MUSLIM VPN PRO (Android)
 
-Application native Android initiale pour NEXA VPN PRO.
+Version 0.4 : navigation façon HTTP Custom (tiroir + onglets Accueil / Profils / Réglages / Guide),
+utilitaires (IP Finder, Auto Ping, Speedtest, Short URL, Hardware ID, Response checker, Share Net),
+journal et débits en direct, MTU et applications exclues du VPN.
+Version 0.3 : VMess, VLESS et Trojan (noyau Xray) en plus du SSH.
+Version 0.2 : activation par token, Hardware ID, compteur de consommation et
+**moteur SSH** (SSH direct, proxy HTTP, payload, SNI/TLS) avec envoi de la consommation au serveur.
 
-## Compilation automatique
+## Config d'un serveur SSH (panneau admin > Serveurs)
+- Type : `ssh`, hôte et port du serveur SSH.
+- Configuration (JSON) :
+  `{"payload":"GET / HTTP/1.1[crlf]Host: exemple.com[crlf]Upgrade: websocket[crlf][crlf]","sni":"","proxy":"","tls_insecure":false}`
+  - `payload` : balises `[crlf] [cr] [lf] [host] [port] [host_port] [protocol] [ua] [split]`
+  - `sni` : active TLS avec ce nom (SSH dans TLS)
+  - `proxy` : `hote:port` d'un proxy HTTP par lequel passer
+  - `tls_insecure` : `true` pour accepter un certificat non valide
+- Identifiants secrets (JSON) : `{"username":"...","password":"..."}`
 
-Chaque push sur `main` déclenche GitHub Actions et compile l'APK de débogage.
-Après un build réussi, téléchargez `app-debug.apk` depuis l'onglet **Actions → dernière exécution → Artifacts**.
+## Construire l'APK (GitHub Actions)
+1. Envoie tout ce dossier (y compris `.github`) dans un dépôt GitHub.
+2. Actions > Build APK > Run workflow.
+3. Télécharge l'artefact `MuslimVpnPro-debug-apk` et installe `app-debug.apk`.
 
-## État actuel
+Le workflow compile aussi tun2socks (hev-socks5-tunnel) avec le NDK. Si une étape échoue,
+envoie le journal de l'étape en erreur pour correction.
 
-Cette première version met en place l'architecture et les écrans de base :
-- Authentification du token par l'API publique configurée
-- Hardware ID local `NEXA-...`
-- Écran d'accueil sombre en français avec 5 onglets
-- Service Android `VpnService` et demandes de permission système
-- Débogage de base et journal de crash
-- Moteur SSH initial et interfaces pour UDP, DNST et Vitora
+## APK signé (mises à jour sans désinstaller)
+La clé de signature n'est jamais dans le dépôt : elle est dans les secrets GitHub
+(KEYSTORE_B64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD). Tant que tu gardes la même clé,
+chaque nouvel APK s'installe par-dessus l'ancien. Le numéro de version interne augmente tout seul
+à chaque compilation. Artefact : `MuslimVpnPro-signed-apk`.
 
-## Important
-
-Les moteurs UDP, DNST, VMess, VLESS, Trojan et Vitora nécessitent leurs implémentations natives et tests d'intégration au serveur correspondant. Le TUN est créé, mais cette version ne relaie pas encore tout le trafic Internet via les moteurs. Ne la présentez pas comme un VPN prêt pour production. Les routes API `/api/public/verify-token` et `/api/public/report-usage` doivent aussi être disponibles sur le panel avec authentification et validation appropriées.
-
-Ne mettez aucun mot de passe de serveur ou secret dans le code ou dans GitHub. Utilisez les secrets de dépôt pour les clés de signature de version ultérieures.
+## Fichiers de configuration .mvpn
+Le panneau génère un fichier `.mvpn` (token + nom + appareil autorisé). Sur le téléphone du client :
+Partager / Ouvrir avec > MUSLIM VPN PRO. L'application importe la configuration et l'active.
+L'identifiant de l'appareil (`MVPN-XXXX-XXXX-XXXX`) s'affiche dès la page d'activation ; un token lié à un
+identifiant n'est accepté que sur cet appareil (contrôle côté serveur).

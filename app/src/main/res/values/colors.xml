@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <color name="nexa_background">#0B0F17</color>
-    <color name="nexa_card">#171D2A</color>
-    <color name="nexa_cyan">#00E5FF</color>
-    <color name="nexa_blue">#2979FF</color>
-    <color name="nexa_white">#FFFFFF</color>
-    <color name="nexa_muted">#8A93A5</color>
-</resources>

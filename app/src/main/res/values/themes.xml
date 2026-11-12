@@ -1,12 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.NexaVpn" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/nexa_cyan</item>
-        <item name="colorPrimaryVariant">@color/nexa_blue</item>
-        <item name="colorSecondary">@color/nexa_cyan</item>
-        <item name="android:statusBarColor">@color/nexa_background</item>
-        <item name="android:navigationBarColor">@color/nexa_background</item>
-        <item name="android:windowLightStatusBar">false</item>
-        <item name="android:fontFamily">sans</item>
+    <style name="Theme.NexaVpnPro" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">#070B12</item>
+        <item name="android:navigationBarColor">#0C1322</item>
     </style>
 </resources>
