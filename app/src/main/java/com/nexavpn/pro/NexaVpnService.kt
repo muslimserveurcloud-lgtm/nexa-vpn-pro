@@ -69,12 +69,11 @@ class NexaVpnService : VpnService() {
         Thread {
             try {
                 val t: Engine = when (session.type) {
-                "ssh" -> SshTunnel(TunnelConfig.from(session))
-                "vmess", "vless", "trojan", "vitora" -> XrayEngine(this, session)
-                "udp" -> UdpCustomEngine(session)
-                "dnst", "slowdns" -> DnstEngine(session)
-                else -> SshTunnel(TunnelConfig.from(session))
-            }")
+                    "ssh" -> SshTunnel(TunnelConfig.from(session))
+                    "vmess", "vless", "trojan", "vitora" -> XrayEngine(this, session)
+                    "udp" -> UdpCustomEngine(session)
+                    "dnst", "slowdns" -> DnstEngine(session)
+                    else -> SshTunnel(TunnelConfig.from(session))
                 }
                 t.connect()
                 tunnel = t
