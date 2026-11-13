@@ -131,9 +131,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           APK="$(ls app/build/outputs/apk/*/*.apk | head -n 1)"
-          NAME="NexaVpnPro-v0.8.3-build${{ github.run_number }}.apk"
+          NAME="NexaVpnPro-v0.8.4-build${{ github.run_number }}.apk"
           cp "$APK" "$NAME"
-          gh release create "v0.8.3" "$NAME" \
-            --title "NEXA VPN PRO v0.8.3" \
-            --notes "🛡️ **NEXA VPN PRO v0.8.3** — Correction native tun2socks (RegisterNatives Z/V et JNI_VERSION_1_6), support complet arm64-v8a, armeabi-v7a et x86_64, et autorisation du trafic cleartext pour les tests de connectivité." \
-            --latest || gh release upload "v0.8.3" "$NAME" --clobber
+          gh release create "v0.8.4" "$NAME" \
+            --title "NEXA VPN PRO v0.8.4" \
+            --notes "🛡️ **NEXA VPN PRO v0.8.4** — Nouvelle icône NEXA officielle et interface sombre modernisée cyan/bleu, sans modifier le moteur VPN. Basée sur la correction JNI 0.8.3." \
+            --latest || gh release upload "v0.8.4" "$NAME" --clobber

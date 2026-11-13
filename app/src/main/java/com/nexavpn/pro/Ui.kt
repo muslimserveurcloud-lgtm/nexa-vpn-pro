@@ -70,26 +70,26 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
-const val APP_VERSION = "0.8.1"
+const val APP_VERSION = "0.8.4"
 
 // ---------------------------------------------------------------- palette (bleu électrique + cyan, thème sombre)
-val Bg = Color(0xFF070B12)
-val Panel = Color(0xFF0C1322)
-val Panel2 = Color(0xFF142038)
-val Line = Color(0xFF1E2F4D)
-val Brand = Color(0xFF00E5FF)
-val Accent = Color(0xFF38BDF8)
-val TextC = Color(0xFFF1F5F2)
-val Muted = Color(0xFF9DB5A6)
-val Dim = Color(0xFF6B8576)
-val Ok = Color(0xFF22C55E)
+val Bg = Color(0xFF080A10)
+val Panel = Color(0xFF111522)
+val Panel2 = Color(0xFF1A2030)
+val Line = Color(0xFF2A3247)
+val Brand = Color(0xFF12D9F5)
+val Accent = Color(0xFF48A9FF)
+val TextC = Color(0xFFF2F4F8)
+val Muted = Color(0xFFA3ADC1)
+val Dim = Color(0xFF707B91)
+val Ok = Color(0xFF36D39A)
 val Warn = Color(0xFFF59E0B)
 val Bad = Color(0xFFEF4444)
 val OnBrand = Color(0xFF04100A)
 
 val BrandGradient = Brush.linearGradient(listOf(Brand, Accent))
 val BrandHorizontal = Brush.horizontalGradient(listOf(Brand, Accent))
-val CardGradient = Brush.linearGradient(listOf(Color(0xFF12281C), Color(0xFF0B1A12)))
+val CardGradient = Brush.linearGradient(listOf(Color(0xFF171D2C), Color(0xFF101522)))
 
 @Composable
 fun NexaTheme(content: @Composable () -> Unit) {
@@ -229,15 +229,14 @@ private fun ActivationScreen(vm: AppViewModel) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Box(
+        androidx.compose.foundation.Image(
+            painter = androidx.compose.ui.res.painterResource(R.drawable.ic_logo),
+            contentDescription = "Logo NEXA VPN PRO",
             modifier = Modifier
-                .size(84.dp)
-                .clip(CircleShape)
-                .background(BrandGradient),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(Icons.Rounded.Shield, contentDescription = null, tint = Color.White, modifier = Modifier.size(42.dp))
-        }
+                .size(92.dp)
+                .clip(RoundedCornerShape(24.dp))
+                .border(1.dp, Brand.copy(alpha = 0.45f), RoundedCornerShape(24.dp))
+        )
         Text(
             text = buildAnnotatedString {
                 append("NEXA ")

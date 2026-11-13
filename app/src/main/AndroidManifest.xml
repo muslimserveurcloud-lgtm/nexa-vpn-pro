@@ -15,7 +15,8 @@
         android:name=".NexaApp"
         android:allowBackup="false"
         android:extractNativeLibs="true"
-        android:icon="@drawable/ic_launcher"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/app_name"
         android:theme="@style/Theme.NexaVpnPro"
         android:usesCleartextTraffic="true">

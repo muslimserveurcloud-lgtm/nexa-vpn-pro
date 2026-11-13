@@ -314,8 +314,25 @@ fun HomeScreen(vm: AppViewModel, s: Session, onOpenLogs: () -> Unit) {
             Spacer(Modifier.height(12.dp))
         }
 
-        // Barre du haut : état + accès aux logs
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        // En-tête NEXA avec le logo fourni et le statut réel du tunnel.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            androidx.compose.foundation.Image(
+                painter = androidx.compose.ui.res.painterResource(R.drawable.ic_logo),
+                contentDescription = "Logo NEXA VPN PRO",
+                modifier = Modifier
+                    .size(42.dp)
+                    .clip(RoundedCornerShape(13.dp))
+                    .border(1.dp, Brand.copy(alpha = 0.45f), RoundedCornerShape(13.dp))
+            )
+            Spacer(Modifier.width(10.dp))
+            Column {
+                Text("NEXA", color = TextC, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text("VPN PRO", color = Accent, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
+            }
+            Spacer(Modifier.weight(1f))
             Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(stateColor))
             Spacer(Modifier.width(8.dp))
             Text(
