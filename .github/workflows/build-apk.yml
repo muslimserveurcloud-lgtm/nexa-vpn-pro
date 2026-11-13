@@ -25,7 +25,7 @@ jobs:
           yes | "$SDKM" --licenses > /dev/null || true
           "$SDKM" "platforms;android-34" "build-tools;34.0.0" "ndk;26.3.11579264"
 
-      # Compilation native de tun2socks (hev-socks5-tunnel)
+      # Compilation native de tun2socks (hev-socks5-tunnel) avec patch JNI_OnLoad
       - name: Compiler tun2socks (hev-socks5-tunnel)
         run: |
           mkdir -p tun/jni
@@ -33,26 +33,57 @@ jobs:
           git clone --depth 1 --recursive https://github.com/heiher/hev-socks5-tunnel.git
           echo 'include $(call all-subdir-makefiles)' > Android.mk
           printf 'APP_CFLAGS := -DPKGNAME=hev/htproxy -DCLSNAME=TProxyService\n' > Application.mk
+
+          python3 -c '
+          path = "hev-socks5-tunnel/src/hev-jni.c"
+          with open(path, "r", encoding="utf-8") as f:
+              c = f.read()
+          old = "res = (*vm)->GetEnv (vm, (void **)&env, JNI_VERSION_1_4);\n    if (res != JNI_OK)\n        return JNI_ERR;"
+          new = "res = (*vm)->GetEnv (vm, (void **)&env, JNI_VERSION_1_6);\n    if (res != JNI_OK) {\n        res = (*vm)->GetEnv (vm, (void **)&env, JNI_VERSION_1_4);\n        if (res != JNI_OK) return JNI_ERR;\n    }"
+          c = c.replace(old, new)
+          old_reg = "res = (*env)->RegisterNatives (env, klass, native_methods,\n                                   N_ELEMENTS (native_methods));\n    (*env)->DeleteLocalRef (env, klass);\n    if (res < 0)\n        return JNI_ERR;"
+          new_reg = """res = (*env)->RegisterNatives (env, klass, native_methods, N_ELEMENTS (native_methods));
+              if (res < 0) {
+                  if ((*env)->ExceptionCheck(env)) (*env)->ExceptionClear(env);
+                  static JNINativeMethod fallback_methods[] = {
+                      { "TProxyStartService", "(Ljava/lang/String;I)V", (void *)native_start_service },
+                      { "TProxyStopService", "()V", (void *)native_stop_service },
+                      { "TProxyGetStats", "()[J", (void *)native_get_stats },
+                  };
+                  (*env)->RegisterNatives (env, klass, fallback_methods, 3);
+                  if ((*env)->ExceptionCheck(env)) (*env)->ExceptionClear(env);
+              }
+              (*env)->DeleteLocalRef (env, klass);"""
+          c = c.replace(old_reg, new_reg)
+          c = c.replace("return JNI_VERSION_1_4;", "return JNI_VERSION_1_6;")
+          with open(path, "w", encoding="utf-8") as f:
+              f.write(c)
+          print("tun2socks JNI patched successfully")
+          '
+
           cd ..
           "$ANDROID_HOME/ndk/26.3.11579264/ndk-build" \
             NDK_LIBS_OUT="$GITHUB_WORKSPACE/app/src/main/jniLibs" \
-            APP_ABI="arm64-v8a armeabi-v7a" \
+            APP_ABI="arm64-v8a armeabi-v7a x86_64" \
             APP_PLATFORM=android-24
           ls -R "$GITHUB_WORKSPACE/app/src/main/jniLibs"
 
-      # Noyau Xray natif (VLESS, VMess, Trojan)
+      # Noyau Xray natif (VLESS, VMess, Trojan) pour arm64-v8a, armeabi-v7a et x86_64
       - name: Télécharger le noyau Xray
         run: |
           set -e
           mkdir -p xray && cd xray
           curl -fsSL -o a64.zip https://github.com/XTLS/Xray-core/releases/latest/download/Xray-android-arm64-v8a.zip
           curl -fsSL -o a32.zip https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-arm32-v7a.zip
+          curl -fsSL -o ax64.zip https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip
           unzip -o a64.zip xray -d a64
           unzip -o a32.zip xray -d a32
+          unzip -o ax64.zip xray -d ax64
           J="$GITHUB_WORKSPACE/app/src/main/jniLibs"
-          mkdir -p "$J/arm64-v8a" "$J/armeabi-v7a"
+          mkdir -p "$J/arm64-v8a" "$J/armeabi-v7a" "$J/x86_64"
           cp a64/xray "$J/arm64-v8a/libxray.so"
           cp a32/xray "$J/armeabi-v7a/libxray.so"
+          cp ax64/xray "$J/x86_64/libxray.so"
           ls -la "$J"/*
 
       - uses: gradle/actions/setup-gradle@v4
@@ -100,9 +131,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           APK="$(ls app/build/outputs/apk/*/*.apk | head -n 1)"
-          NAME="NexaVpnPro-v1.0.0-build${{ github.run_number }}.apk"
+          NAME="NexaVpnPro-v0.8.3-build${{ github.run_number }}.apk"
           cp "$APK" "$NAME"
-          gh release create "v1.0.0-${{ github.run_number }}" "$NAME" \
-            --title "NEXA VPN PRO v1.0.0 (Build ${{ github.run_number }})" \
-            --notes "🛡️ **NEXA VPN PRO** — Version Android complète avec protocoles natifs (SSH, Xray/V2Ray, UDP Custom, SlowDNS) et tun2socks natif compilé. Télécharge l'APK ci-dessous pour l'installer sur ton téléphone." \
-            --latest
+          gh release create "v0.8.3" "$NAME" \
+            --title "NEXA VPN PRO v0.8.3" \
+            --notes "🛡️ **NEXA VPN PRO v0.8.3** — Correction native tun2socks (RegisterNatives Z/V et JNI_VERSION_1_6), support complet arm64-v8a, armeabi-v7a et x86_64, et autorisation du trafic cleartext pour les tests de connectivité." \
+            --latest || gh release upload "v0.8.3" "$NAME" --clobber

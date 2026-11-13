@@ -12,11 +12,11 @@ android {
         applicationId = "com.nexavpn.pro"
         minSdk = 24
         targetSdk = 34
-        versionCode = 100 + (System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1)
-        versionName = "1.0.0"
+        versionCode = 830 + (System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1)
+        versionName = "0.8.3"
 
         ndk {
-            abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
         }
     }
 

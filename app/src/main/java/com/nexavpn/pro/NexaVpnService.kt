@@ -169,7 +169,7 @@ class NexaVpnService : VpnService() {
 
     /** Vérifie que le serveur laisse réellement passer du trafic (via le SOCKS local, sans passer par le VPN). */
     private fun checkTunnel(port: Int): String {
-        val urls = listOf("http://cp.cloudflare.com/generate_204", "http://connectivitycheck.gstatic.com/generate_204")
+        val urls = listOf("https://cp.cloudflare.com/generate_204", "https://connectivitycheck.gstatic.com/generate_204", "http://cp.cloudflare.com/generate_204")
         var last = ""
         for (u in urls) {
             val t0 = System.nanoTime()

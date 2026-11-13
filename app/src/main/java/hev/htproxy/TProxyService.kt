@@ -2,7 +2,7 @@ package hev.htproxy
 
 /**
  * Pont JNI vers hev-socks5-tunnel (tun2socks), compilé par le workflow GitHub.
- * Le nom du package et de la classe doivent rester exactement ceux-ci : ils définissent les symboles JNI.
+ * Le nom du package et de la classe ainsi que les signatures doivent correspondre exactement aux symboles JNI.
  */
 object TProxyService {
     init {
@@ -10,9 +10,14 @@ object TProxyService {
     }
 
     @JvmStatic
-    external fun TProxyStartService(configPath: String, fd: Int)
+    external fun TProxyStartService(configPath: String, fd: Int): Boolean
+
     @JvmStatic
-    external fun TProxyStopService()
+    external fun TProxyStopService(): Boolean
+
+    @JvmStatic
+    external fun TProxyIsRunning(): Boolean
+
     @JvmStatic
     external fun TProxyGetStats(): LongArray
 }
